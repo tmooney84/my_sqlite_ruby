@@ -1,3 +1,5 @@
+require 'csv'
+
 =begin
 PART I Describing scope of project
 
@@ -16,20 +18,28 @@ class MySqliteRequest
   def initialize
     @type_of_request = :none
     @select_columns  = []
+    @where_params    = []
     @table_name      = nil
     @order           = :asc
   end
 
   def from(table_name)
+    @table_name = table_name
     self
   end
 
-  def select(array)
+  def select(columns)
+    if(columns.is_a?(Array))
+      @select_columns += columns.collect { |elem| elem.to_s }
+    else
+      @select_columns << columns.to_s
+    end
     self._setTypeOfRequest(:select) 
     self
   end
 
   def where(column_name, criteria)
+    @where_params << [column_name, criteria]
     self
   end
   
@@ -43,6 +53,7 @@ class MySqliteRequest
 
   def insert(table_name)
     self._setTypeOfRequest(:insert) 
+    @table_name = table_name
     self
   end
 
@@ -52,6 +63,7 @@ class MySqliteRequest
 
   def update(table_name)
     self._setTypeOfRequest(:update) 
+    @table_name = table_name
     self
   end
 
@@ -64,12 +76,24 @@ class MySqliteRequest
     self
   end
 
+  def print_select_type
+    puts "Select Attributes #{@select_columns}"
+    puts "Where Attributes #{@where_params}"
+  end
+
   def print
     puts "Type of Request #{@type_of_request}"
+    puts "Table Name #{@table_name}"
+    if(@type_of_request == :select)
+      print_select_type
+    end
   end
 
   def run
     print
+    if(@type_of_request == :select)
+      _run_select 
+    end
   end
 
   def _setTypeOfRequest(new_type)
@@ -81,6 +105,17 @@ class MySqliteRequest
 
   end
 
+  def _run_select
+    result = []
+    CSV.parse(File.read(@table_name), headers: true).each do |row|
+      @where_params.each do |where_attribute|
+        if(row[where_attribute[0]] == where_attribute[1])
+          result << @select_columns.slice(*select_columns)
+        end
+      end
+    end
+    result
+  end
 end
 
 def _main()
