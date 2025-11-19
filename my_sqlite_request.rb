@@ -16,11 +16,12 @@ PART I Describing scope of project
 
 class MySqliteRequest
   def initialize
-    @type_of_request = :none
-    @select_columns  = []
-    @where_params    = []
-    @table_name      = nil
-    @order           = :asc
+    @type_of_request    = :none
+    @select_columns     = []
+    @where_params       = []
+    @insert_attributes  = []
+    @table_name         = nil
+    @order              = :asc
   end
 
   def from(table_name)
@@ -58,6 +59,11 @@ class MySqliteRequest
   end
 
   def values(data)
+    if (@type_of_request == :insert)
+      @insert_attributes = data
+    else
+      raise 'Wrong type of request to call values()'
+    end
     self
   end
 
@@ -81,11 +87,17 @@ class MySqliteRequest
     puts "Where Attributes #{@where_params}"
   end
 
+  def print_insert_type
+    puts "Insert Attributes #{@insert_attributes}"
+  end
+  
   def print
     puts "Type of Request #{@type_of_request}"
     puts "Table Name #{@table_name}"
     if(@type_of_request == :select)
       print_select_type
+    elsif(@type_of_request == :insert)
+      print_insert_type
     end
   end
 
@@ -93,6 +105,8 @@ class MySqliteRequest
     print
     if(@type_of_request == :select)
       _run_select 
+    elsif(@type_of_request == :insert)
+      _run_insert
     end
   end
 
@@ -110,20 +124,41 @@ class MySqliteRequest
     CSV.parse(File.read(@table_name), headers: true).each do |row|
       @where_params.each do |where_attribute|
         if(row[where_attribute[0]] == where_attribute[1])
-          result << @select_columns.slice(*select_columns)
+          result << row.to_hash.slice(*@select_columns)
         end
       end
     end
     result
   end
+
+  # def _run_insert
+  #   File.open(@table_name, 'a') do |f|
+  #     f.puts @insert_attributes.values.join(',')
+  #   end
+  # end
+
+  def _run_insert
+    CSV.open(@table_name, 'a') do |csv|
+      csv << @insert_attributes.values
+    end
+  end
 end
 
 def _main()
+=begin
   request = MySqliteRequest.new
   request = request.from('nba_player_data.csv')
   request = request.select('name')
-  request = request.where('birth_state', 'Indiana')
+  request = request.where('year_start', '1991')
+  p request.run.count
+=end
+  
+  request = MySqliteRequest.new
+  request = request.insert('nba_player_data_light.csv')
+  request = request.values({"name" => "Don Adams","year_start" => "1971","year_end" => "1977","position" => "F","height" => "6-6","weight" => "210","birth_date" => "November 27, 1947","college" => "Northwestern University"})
   request.run
+
 end
 
 _main()
+
