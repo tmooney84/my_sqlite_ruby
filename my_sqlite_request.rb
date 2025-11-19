@@ -131,12 +131,6 @@ class MySqliteRequest
     result
   end
 
-  # def _run_insert
-  #   File.open(@table_name, 'a') do |f|
-  #     f.puts @insert_attributes.values.join(',')
-  #   end
-  # end
-
   def _run_insert
     CSV.open(@table_name, 'a') do |csv|
       csv << @insert_attributes.values
@@ -145,6 +139,8 @@ class MySqliteRequest
 end
 
 def _main()
+
+#SELECT * FROM db WHERE db.year_start = 1991;
 =begin
   request = MySqliteRequest.new
   request = request.from('nba_player_data.csv')
@@ -152,11 +148,60 @@ def _main()
   request = request.where('year_start', '1991')
   p request.run.count
 =end
-  
+ 
+# INSERT INTO nba_player_data_light
+#   (name, year_start, year_end, position, height, weight, birth_date, college)
+# VALUES
+#   ("Don Adams", "1971", "1977", "F", "6-6", "210", "November 27, 1947", "Northwestern University");
+
+  # request = MySqliteRequest.new
+  # request = request.insert('nba_player_data_light.csv')
+  # request = request.values({"name" => "Don Adams","year_start" => "1971","year_end" => "1977","position" => "F","height" => "6-6","weight" => "210","birth_date" => "November 27, 1947","college" => "Northwestern University"})
+  # request.run
+
+
+
+################################ Need to finish SET
+
+# SET
+# UPDATE nba_player_data_light
+# SET
+#   year_start = "1971",
+#   year_end = "1977",
+#   position = "F",
+#   height = "6-6",
+#   weight = "210",
+#   birth_date = "November 27, 1947",
+#   college = "Northwestern University"
+# WHERE name = "Don Adams";
+
+### if there is no WHERE, it updates all of the columns with the new info
   request = MySqliteRequest.new
-  request = request.insert('nba_player_data_light.csv')
-  request = request.values({"name" => "Don Adams","year_start" => "1971","year_end" => "1977","position" => "F","height" => "6-6","weight" => "210","birth_date" => "November 27, 1947","college" => "Northwestern University"})
+  request = request.update('nba_player_data_light.csv')
+  request = request.set({
+    "year_start" => "1971",
+    "year_end"   => "1977",
+    "position"   => "F",
+    "height"     => "6-6",
+    "weight"     => "210",
+    "birth_date" => "November 27, 1947",
+    "college"    => "Northwestern University"
+  })
+  request = request.where("name", "Don Adams")
   request.run
+
+
+
+################################ Need to finish DELETE
+
+# DELETE
+
+# DELETE FROM nba_player_data_light
+# WHERE name = "Don Adams";
+  # request = MySqliteRequest.new
+  # request = request.delete('nba_player_data_light.csv')
+  # request = request.where("name", "Don Adams")
+  # request.run
 
 end
 
