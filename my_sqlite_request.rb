@@ -149,20 +149,49 @@ class MySqliteRequest
   end
 
 
+  # def _run_select
+  #   result = []
+  #   CSV.parse(File.read(@table_name), headers: true).each do |row|
+  #     @where_params.each do |where_attribute|
+  #       if(row[where_attribute[0]] == where_attribute[1])
+  #         result << row.to_hash.slice(*@select_columns)
+  #       end
+  #     end
+  #   end
+
+  #   if @order_column
+  #   result.sort_by! { |row| row[@order_column] }
+  #   result.reverse! if @order == :desc
+  #   end
+  #   result
+  # end
   def _run_select
     result = []
+
     CSV.parse(File.read(@table_name), headers: true).each do |row|
-      @where_params.each do |where_attribute|
-        if(row[where_attribute[0]] == where_attribute[1])
+    # If there is no WHERE → match everything
+    # If there is a WHERE → require all where conditions to match
+      match =
+        if @where_params.empty?
+          true
+        else
+          @where_params.all? { |col, val| row[col].to_s == val.to_s }
+        end
+
+      if match
+        if @select_columns == ["*"]
+          result << row.to_hash
+        else
           result << row.to_hash.slice(*@select_columns)
         end
       end
     end
 
     if @order_column
-    result.sort_by! { |row| row[@order_column] }
-    result.reverse! if @order == :desc
+      result.sort_by! { |row| row[@order_column] }
+      result.reverse! if @order == :desc
     end
+
     result
   end
 
@@ -209,15 +238,19 @@ def _main()
   # request = request.where('year_start', '1991')
   #p request.run
   #p request.run.count
-
+  
+  # request = MySqliteRequest.new
+  # request = request.from('nba_player_data_light.csv')
+  # request = request.select('name')
+  # p request.run
 
 #SELECT * FROM db WHERE db.year_start = 1991 ORDER BY name DESC;
-  request = MySqliteRequest.new
-  request = request.from('nba_player_data.csv')
-  request = request.select('name')
-  request = request.order('desc', 'name')
-  request = request.where('year_start', '1991')
-  p request.run
+  # request = MySqliteRequest.new
+  # request = request.from('nba_player_data.csv')
+  # request = request.select('name')
+  # request = request.order('desc', 'name')
+  # request = request.where('year_start', '1991')
+  # p request.run
  
 # INSERT INTO nba_player_data_light
 #   (name, year_start, year_end, position, height, weight, birth_date, college)
