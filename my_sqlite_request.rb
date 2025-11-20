@@ -21,8 +21,10 @@ class MySqliteRequest
     @where_params       = []
     @insert_attributes  = []
     @update_attributes  = {}
-    @table_name         = nil
+    @join_params        = nil
     @order              = :asc
+    @order_column       = nil 
+    @table_name         = nil
   end
 
   def from(table_name)
@@ -46,10 +48,13 @@ class MySqliteRequest
   end
   
   def join(column_on_db_a, filename_db_b, column_on_db_b)
+    @join_params = [column_on_db_a, filename_db_b, column_on_db_b] 
     self
   end
 
   def order(order, column_name)
+    @order = order.to_sym
+    @order_column = column_name.to_s
     self
   end
 
@@ -92,19 +97,18 @@ class MySqliteRequest
   def print_select_type
     puts "Select Attributes #{@select_columns}"
     puts "Where Attributes #{@where_params}"
+    puts "Order By Attributes #{@order_column} #{@order}"
   end
 
   def print_insert_type
     puts "Insert Attributes #{@insert_attributes}"
   end
 
-  ###
   def print_update_type
     puts "Update Attributes #{@update_attributes}"
     puts "Where Attributes #{@where_params}"
   end
 
-  ###
   def print_delete_type
     puts "Where Attributes #{@where_params}"
   end
@@ -129,7 +133,7 @@ class MySqliteRequest
       _run_select 
     elsif(@type_of_request == :insert)
       _run_insert
-    elsif(@type_of_request == :update) ### should this be UPDATE instead of SET???
+    elsif(@type_of_request == :update) 
       _run_update
     elsif(@type_of_request == :delete)
       _run_delete
@@ -142,8 +146,8 @@ class MySqliteRequest
     else
       raise "Invalid: type of request already set to #{@type_of_request} (new type -> #{new_type})"
     end
-
   end
+
 
   def _run_select
     result = []
@@ -154,8 +158,14 @@ class MySqliteRequest
         end
       end
     end
+
+    if @order_column
+    result.sort_by! { |row| row[@order_column] }
+    result.reverse! if @order == :desc
+    end
     result
   end
+
 
   def _run_insert
     CSV.open(@table_name, 'a') do |csv|
@@ -193,13 +203,21 @@ end
 def _main()
 
 #SELECT * FROM db WHERE db.year_start = 1991;
-=begin
+  # request = MySqliteRequest.new
+  # request = request.from('nba_player_data.csv')
+  # request = request.select('name')
+  # request = request.where('year_start', '1991')
+  #p request.run
+  #p request.run.count
+
+
+#SELECT * FROM db WHERE db.year_start = 1991 ORDER BY name DESC;
   request = MySqliteRequest.new
   request = request.from('nba_player_data.csv')
   request = request.select('name')
+  request = request.order('desc', 'name')
   request = request.where('year_start', '1991')
-  p request.run.count
-=end
+  p request.run
  
 # INSERT INTO nba_player_data_light
 #   (name, year_start, year_end, position, height, weight, birth_date, college)
@@ -250,10 +268,10 @@ def _main()
 
 # DELETE FROM nba_player_data_light
 # WHERE name = "Don Adams";
-  request = MySqliteRequest.new
-  request = request.delete('nba_player_data_light.csv')
-  request = request.where("name", "Forest Able")
-  request.run
+  # request = MySqliteRequest.new
+  # request = request.delete('nba_player_data_light.csv')
+  # request = request.where("name", "Forest Able")
+  # request.run
 
 end
 
