@@ -20,6 +20,7 @@ class MySqliteRequest
     @select_columns     = []
     @where_params       = []
     @insert_attributes  = []
+    @update_attributes  = {}
     @table_name         = nil
     @order              = :asc
   end
@@ -74,14 +75,20 @@ class MySqliteRequest
   end
 
   def set(data)
+    if (@type_of_request == :update)
+      @update_attributes = data
+    else
+      raise 'Wrong type of request to call set()'
+    end
     self
   end
 
-  def delete
-    self._setTypeOfRequest(:update) 
+  def delete(table_name)
+    self._setTypeOfRequest(:delete)
+    @table_name = table_name
     self
   end
-
+ 
   def print_select_type
     puts "Select Attributes #{@select_columns}"
     puts "Where Attributes #{@where_params}"
@@ -89,6 +96,17 @@ class MySqliteRequest
 
   def print_insert_type
     puts "Insert Attributes #{@insert_attributes}"
+  end
+
+  ###
+  def print_update_type
+    puts "Update Attributes #{@update_attributes}"
+    puts "Where Attributes #{@where_params}"
+  end
+
+  ###
+  def print_delete_type
+    puts "Where Attributes #{@where_params}"
   end
   
   def print
@@ -98,6 +116,10 @@ class MySqliteRequest
       print_select_type
     elsif(@type_of_request == :insert)
       print_insert_type
+    elsif(@type_of_request == :update)
+      print_update_type
+    elsif(@type_of_request == :delete)
+      print_delete_type
     end
   end
 
@@ -107,6 +129,10 @@ class MySqliteRequest
       _run_select 
     elsif(@type_of_request == :insert)
       _run_insert
+    elsif(@type_of_request == :update) ### should this be UPDATE instead of SET???
+      _run_update
+    elsif(@type_of_request == :delete)
+      _run_delete
     end
   end
 
@@ -136,6 +162,32 @@ class MySqliteRequest
       csv << @insert_attributes.values
     end
   end
+
+  def _run_update
+    table = CSV.table(@table_name)
+
+    table.each do |row|
+      match = @where_params.all? {|col, val| row[col.to_sym].to_s == val.to_s}
+      
+      if match || @where_params.empty?
+        @update_attributes.each do |col, val|
+          row[col.to_sym] = val
+        end
+      end
+    end
+
+    File.open(@table_name, 'w') { |f| f.write(table.to_csv) }
+  end
+
+  def _run_delete
+    table = CSV.table(@table_name)
+
+    table.delete_if do |row|
+      @where_params.all? {|col, val| row[col.to_sym].to_s == val.to_s}
+    end
+
+    File.open(@table_name, 'w') { |f| f.write(table.to_csv) }
+  end
 end
 
 def _main()
@@ -163,7 +215,7 @@ def _main()
 
 ################################ Need to finish SET
 
-# SET
+# UPDATE
 # UPDATE nba_player_data_light
 # SET
 #   year_start = "1971",
@@ -176,19 +228,19 @@ def _main()
 # WHERE name = "Don Adams";
 
 ### if there is no WHERE, it updates all of the columns with the new info
-  request = MySqliteRequest.new
-  request = request.update('nba_player_data_light.csv')
-  request = request.set({
-    "year_start" => "1971",
-    "year_end"   => "1977",
-    "position"   => "F",
-    "height"     => "6-6",
-    "weight"     => "210",
-    "birth_date" => "November 27, 1947",
-    "college"    => "Northwestern University"
-  })
-  request = request.where("name", "Don Adams")
-  request.run
+  # request = MySqliteRequest.new
+  # request = request.update('nba_player_data_light.csv')
+  # request = request.set({
+  #   "year_start" => "1971",
+  #   "year_end"   => "1977",
+  #   "position"   => "F",
+  #   "height"     => "6-6",
+  #   "weight"     => "210",
+  #   "birth_date" => "November 27, 1947",
+  #   "college"    => "Whatsamata U"
+  # })
+  # request = request.where("name", "Don Adams")
+  # request.run
 
 
 
@@ -198,10 +250,10 @@ def _main()
 
 # DELETE FROM nba_player_data_light
 # WHERE name = "Don Adams";
-  # request = MySqliteRequest.new
-  # request = request.delete('nba_player_data_light.csv')
-  # request = request.where("name", "Don Adams")
-  # request.run
+  request = MySqliteRequest.new
+  request = request.delete('nba_player_data_light.csv')
+  request = request.where("name", "Forest Able")
+  request.run
 
 end
 
