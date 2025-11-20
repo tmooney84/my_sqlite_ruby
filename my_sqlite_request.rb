@@ -32,15 +32,25 @@ class MySqliteRequest
     self
   end
 
-  def select(columns)
-    if(columns.is_a?(Array))
-      @select_columns += columns.collect { |elem| elem.to_s }
-    else
-      @select_columns << columns.to_s
+  # def select(columns)
+  #   if(columns.is_a?(Array))
+  #     @select_columns += columns.collect { |elem| elem.to_s }
+  #   else
+  #     @select_columns << columns.to_s
+  #   end
+  #   self._setTypeOfRequest(:select) 
+  #   self
+  # end
+
+  def select(*columns)
+    columns.flatten.each do |col|
+      @select_columns << col.to_s
     end
-    self._setTypeOfRequest(:select) 
+
+    self._setTypeOfRequest(:select)
     self
   end
+
 
   def where(column_name, criteria)
     @where_params << [column_name, criteria]
@@ -165,28 +175,91 @@ class MySqliteRequest
   #   end
   #   result
   # end
+  
+  
+  # def _run_select
+  #   result = []
+
+  #   CSV.parse(File.read(@table_name), headers: true).each do |row|
+  #     match =
+  #       if @where_params.empty?
+  #         true
+  #       else
+  #         @where_params.all? { |col, val| row[col].to_s == val.to_s }
+  #       end
+
+  #     if match
+  #       if @select_columns == ["*"]
+  #         result << row.to_hash
+  #       else
+  #         result << row.to_hash.slice(*@select_columns)
+  #       end
+  #     end
+  #   end
+
+  #   if @order_column
+  #     result.sort_by! { |row| row[@order_column] }
+  #     result.reverse! if @order == :desc
+  #   end
+
+  #   result
+  # end
+
   def _run_select
     result = []
 
+  # JOIN SETUP ---------------------------------------------------
+    join_column_a, join_filename, join_column_b =
+      @join_params || [nil, nil, nil]
+
+  # If a JOIN was declared, load the second CSV
+    join_lookup = nil
+    if join_filename
+      join_lookup = {}
+
+      CSV.parse(File.read(join_filename), headers: true).each do |join_row|
+        key = join_row[join_column_b].to_s
+        join_lookup[key] = join_row.to_hash
+      end
+    end
+
+  # MAIN SELECT LOOP --------------------------------------------
     CSV.parse(File.read(@table_name), headers: true).each do |row|
-    # If there is no WHERE → match everything
-    # If there is a WHERE → require all where conditions to match
+      row_hash = row.to_hash
+
+    # Perform JOIN (INNER JOIN)
+      if join_lookup
+        join_key = row_hash[join_column_a].to_s
+        joined_row = join_lookup[join_key]
+
+      # Skip rows that do not match join (INNER JOIN behavior)
+        next unless joined_row
+
+      # Merge columns from table B into table A row
+        row_hash = row_hash.merge(joined_row)
+      end
+
+    # WHERE logic
       match =
         if @where_params.empty?
           true
         else
-          @where_params.all? { |col, val| row[col].to_s == val.to_s }
+          @where_params.all? do |col, val|
+            row_hash[col].to_s == val.to_s
+          end
         end
 
-      if match
-        if @select_columns == ["*"]
-          result << row.to_hash
-        else
-          result << row.to_hash.slice(*@select_columns)
-        end
+      next unless match
+
+    # SELECT logic
+      if @select_columns == ["*"]
+        result << row_hash
+      else
+        result << row_hash.slice(*@select_columns)
       end
     end
 
+  # ORDER logic
     if @order_column
       result.sort_by! { |row| row[@order_column] }
       result.reverse! if @order == :desc
@@ -236,8 +309,8 @@ def _main()
   # request = request.from('nba_player_data.csv')
   # request = request.select('name')
   # request = request.where('year_start', '1991')
-  #p request.run
-  #p request.run.count
+  # p request.run
+  # p request.run.count
   
   # request = MySqliteRequest.new
   # request = request.from('nba_player_data_light.csv')
@@ -305,6 +378,17 @@ def _main()
   # request = request.delete('nba_player_data_light.csv')
   # request = request.where("name", "Forest Able")
   # request.run
+
+
+  request = MySqliteRequest.new
+  rows = request
+    .from("nba_player.csv")
+    .select("name", "team_name")
+    .join("team_id", "teams.csv", "team_id")
+    .run
+
+  p rows
+
 
 end
 
