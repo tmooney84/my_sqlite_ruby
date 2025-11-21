@@ -260,6 +260,43 @@ class MySqliteRequestCli
   # ================================================================
   # DELETE
   # ================================================================
+  # def parse_delete(tokens)
+  #   tokens.shift # FROM
+  #   table_name = tokens.shift
+
+  #   req = MySqliteRequest.new
+  #   req.delete(table_name)
+
+  #   if tokens.first&.upcase == "WHERE"
+  #     tokens.shift
+  #     col = tokens.shift
+  #     tokens.shift # "="
+  #     val = tokens.shift.gsub('"', '')
+  #     req.where(col, val)
+  #   end
+
+  #   req
+  # end
+#######################################
+  # def parse_delete(tokens)
+  #   tokens.shift # FROM
+  #   table_name = tokens.shift
+
+  #   req = MySqliteRequest.new
+  #   req.delete(table_name)
+
+  #   if tokens.first&.upcase == "WHERE"
+  #     tokens.shift # remove WHERE
+  #     condition = tokens.shift
+  #     col, val = condition.split("=", 2)
+  #     val = val.gsub('"', '').gsub(";", "")
+  #     req.where(col.strip, val.strip)
+  #   end
+
+  #   req
+  # end
+########################################
+
   def parse_delete(tokens)
     tokens.shift # FROM
     table_name = tokens.shift
@@ -268,15 +305,22 @@ class MySqliteRequestCli
     req.delete(table_name)
 
     if tokens.first&.upcase == "WHERE"
-      tokens.shift
-      col = tokens.shift
-      tokens.shift # "="
-      val = tokens.shift.gsub('"', '')
-      req.where(col, val)
+      tokens.shift # remove WHERE
+      # Collect all remaining tokens as the condition string
+      condition_tokens = []
+      while tokens.any?
+        condition_tokens << tokens.shift
+      end
+      condition_str = condition_tokens.join(" ")
+      col, val = condition_str.split("=", 2)
+      val = val.gsub('"', '').gsub(";", "").strip
+      req.where(col.strip, val)
     end
 
     req
   end
+
+
 end
 
 
