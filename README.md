@@ -8,7 +8,7 @@ my_sqlite is a light weight database program written in Ruby that includes SELEC
 This application is comprised of a command-line parsing interface file (my_sqlite_cli.rb) and a second file that houses the SQL logic for performing CRUD functionality on CSV tables.
 
 ## Installation
-Clone the reposity using SSH:
+Clone the my_sqlite reposity using SSH:
 
 ```bash
 git clone git@git.us.qwasar.io:my_sqlite_196364_zb4-2n/my_sqlite.git
