@@ -35,7 +35,8 @@ class MySqliteRequestCli
   # ================================================================
   def parse(sql)
     sql = sql.strip.gsub(";", "")
-    tokens = sql.split(/\s+/)
+    #tokens = sql.split(/\s+/)
+    tokens = sql.scan(/"[^"]*"|\S+/)
 
     command = tokens.shift.upcase
 
@@ -193,6 +194,36 @@ class MySqliteRequestCli
   # ================================================================
   # UPDATE
   # ================================================================
+  # def parse_update(tokens)
+  #   table_name = tokens.shift
+
+  #   req = MySqliteRequest.new
+  #   req.update(table_name)
+
+  #   tokens.shift # SET
+
+  #   update_hash = {}
+
+  #   # Collect assignments until WHERE
+  #   while tokens.first && tokens.first.upcase != "WHERE"
+  #     assignment = tokens.shift
+  #     col, val = assignment.split("=")
+  #     update_hash[col] = val.gsub('"', '')
+  #   end
+
+  #   req.set(update_hash)
+
+  #   if tokens.first&.upcase == "WHERE"
+  #     tokens.shift
+  #     col = tokens.shift
+  #     tokens.shift # "="
+  #     val = tokens.shift.gsub('"', '')
+  #     req.where(col, val)
+  #   end
+
+  #   req
+  # end
+
   def parse_update(tokens)
     table_name = tokens.shift
 
@@ -203,25 +234,27 @@ class MySqliteRequestCli
 
     update_hash = {}
 
-    # Collect assignments until WHERE
     while tokens.first && tokens.first.upcase != "WHERE"
       assignment = tokens.shift
-      col, val = assignment.split("=")
-      update_hash[col] = val.gsub('"', '')
+      col, val = assignment.split("=", 2)
+      val = val.gsub('"', '').gsub(";", "")
+      update_hash[col.strip] = val.strip
     end
 
     req.set(update_hash)
 
     if tokens.first&.upcase == "WHERE"
       tokens.shift
-      col = tokens.shift
-      tokens.shift # "="
-      val = tokens.shift.gsub('"', '')
-      req.where(col, val)
+      condition = tokens.shift
+      col, val = condition.split("=", 2)
+      val = val.gsub('"', '').gsub(";", "")
+      req.where(col.strip, val.strip)
     end
 
     req
   end
+ 
+ 
 
 
   # ================================================================
