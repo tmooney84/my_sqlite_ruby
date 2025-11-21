@@ -58,7 +58,9 @@ class MySqliteRequest
   end
   
   def join(column_on_db_a, filename_db_b, column_on_db_b)
-    @join_params = [column_on_db_a, filename_db_b, column_on_db_b] 
+    col_a = column_on_db_a.split(".").last   # "team_id"
+    col_b = column_on_db_b.split(".").last   # "team_id"
+    @join_params = [col_a, filename_db_b, col_b] 
     self
   end
 
@@ -380,14 +382,14 @@ def _main()
   # request.run
 
 
-  request = MySqliteRequest.new
-  rows = request
-    .from("nba_player.csv")
-    .select("name", "team_name")
-    .join("team_id", "teams.csv", "team_id")
-    .run
+  # request = MySqliteRequest.new
+  # rows = request
+  #   .from("nba_player.csv")
+  #   .select("name", "team_name")
+  #   .join("team_id", "teams.csv", "team_id")
+  #   .run
 
-  p rows
+  # p rows
 
 
 end

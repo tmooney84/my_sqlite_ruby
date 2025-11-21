@@ -1,3 +1,4 @@
+#require "./my_sqlite_request.rb"
 require "readline"
 
 class MySqliteRequestCli
@@ -8,7 +9,7 @@ class MySqliteRequestCli
   def run!
     while buf = Readline.readline("> ", true)
       instance_of_request = parse(buf)
-      instance_of_request.run
+      instance_of_request
     end
   end
 end
