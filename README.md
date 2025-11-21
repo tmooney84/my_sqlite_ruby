@@ -2,20 +2,33 @@
 ***
 
 ## Task
-TODO - What is the problem? And where is the challenge?
+my_sqlite is a light weight database program written in Ruby that includes SELECT, INSERT, UPDATE and DELETE functionality to make use of CSV databases. It allows the user to manipulate the information using  inner joins, WHERE and ORDER BY as well.
 
 ## Description
-TODO - How have you solved the problem?
+This application is comprised of a command-line parsing interface file (my_sqlite_cli.rb) and a second file that houses the SQL logic for performing CRUD functionality on CSV tables.
 
 ## Installation
-TODO - How to install your project? npm install? make? make re?
+Clone the reposity using SSH:
+
+```bash
+git clone git@git.us.qwasar.io:my_sqlite_196364_zb4-2n/my_sqlite.git
+```
 
 ## Usage
-TODO - How does it work?
-```
-./my_project argument1 argument2
+Ruby needs to be installed on your system in order to use this application. See Ruby's official documentation for more details: https://www.ruby-lang.org/en/documentation/installation/
+
+-nba_player_data.csv is a mock table for demonstrating the program's functionality
+
+In order to start the program run:
+
+```bash
+ruby my_sqlite_cli.rb
 ```
 
+Enter in the SQL Query that you would like to run:
+```
+my_sqlite> SELECT name FROM nba_player_data.csv WHERE year_start = 1985;
+```
 ### The Core Team
 
 
