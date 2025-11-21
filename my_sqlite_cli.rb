@@ -223,38 +223,86 @@ class MySqliteRequestCli
 
   #   req
   # end
+##################################################################
+  # def parse_update(tokens)
+  #   table_name = tokens.shift
 
+  #   req = MySqliteRequest.new
+  #   req.update(table_name)
+
+  #   tokens.shift # SET
+
+  #   update_hash = {}
+
+  #   while tokens.first && tokens.first.upcase != "WHERE"
+  #     assignment = tokens.shift
+  #     col, val = assignment.split("=", 2)
+  #     val = val.gsub('"', '').gsub(";", "")
+  #     update_hash[col.strip] = val.strip
+  #   end
+
+  #   req.set(update_hash)
+
+  #   if tokens.first&.upcase == "WHERE"
+  #     tokens.shift
+  #     condition = tokens.shift
+  #     col, val = condition.split("=", 2)
+  #     val = val.gsub('"', '').gsub(";", "")
+  #     req.where(col.strip, val.strip)
+  #   end
+
+  #   req
+  # end
+ 
   def parse_update(tokens)
     table_name = tokens.shift
-
     req = MySqliteRequest.new
     req.update(table_name)
 
-    tokens.shift # SET
+    # remove SET (if present)
+    tokens.shift if tokens.first&.upcase == "SET"
+
+    # Collect everything up to WHERE (or end) as one string
+    set_tokens = []
+    while tokens.any? && tokens.first.upcase != "WHERE"
+      set_tokens << tokens.shift
+    end
+    set_str = set_tokens.join(" ")
+
+    # Split by commas to get each assignment (commas inside quotes remain intact)
+    assignments = set_str.split(",").map(&:strip).reject(&:empty?)
 
     update_hash = {}
-
-    while tokens.first && tokens.first.upcase != "WHERE"
-      assignment = tokens.shift
+    assignments.each do |assignment|
       col, val = assignment.split("=", 2)
-      val = val.gsub('"', '').gsub(";", "")
-      update_hash[col.strip] = val.strip
+      unless val
+        raise "Invalid SET assignment: #{assignment.inspect}"
+      end
+      val = val.strip
+      # remove surrounding quotes if present
+      val = val.sub(/\A"/, "").sub(/"\z/, "")
+      update_hash[col.strip] = val
     end
 
     req.set(update_hash)
 
+    # Parse WHERE (everything after WHERE)
     if tokens.first&.upcase == "WHERE"
       tokens.shift
-      condition = tokens.shift
-      col, val = condition.split("=", 2)
-      val = val.gsub('"', '').gsub(";", "")
+      cond_tokens = []
+      cond_tokens << tokens.shift while tokens.any?
+      cond_str = cond_tokens.join(" ")
+      col, val = cond_str.split("=", 2)
+      unless val
+        raise "Invalid WHERE condition: #{cond_str.inspect}"
+      end
+      val = val.strip.sub(/\A"/, "").sub(/"\z/, "")
       req.where(col.strip, val.strip)
     end
 
     req
   end
- 
- 
+
 
 
   # ================================================================
