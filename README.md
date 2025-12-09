@@ -41,7 +41,12 @@ UPDATE teams.csv SET team_name="Golden State Warriors" WHERE team_id="3";
 
 --DELETE functionality--
 my_sqlite> DELETE FROM teams.csv WHERE team_name="Los Angeles Lakers";
+```
 
+To quit the program:
+```
+my_sqlite> quit
+```
 
 ### The Core Team
 
