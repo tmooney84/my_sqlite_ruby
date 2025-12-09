@@ -27,8 +27,22 @@ ruby my_sqlite_cli.rb
 
 Enter in the SQL Query that you would like to run:
 ```
-my_sqlite> SELECT name FROM nba_player_data.csv WHERE year_start = 1985;
-```
+--SELECT functionality--
+my_sqlite> SELECT name FROM nba_player_data.csv WHERE year_start = 1971;
+
+--SELECT functionality with JOIN and DESC
+my_sqlite> SELECT name, team_name FROM nba_players.csv JOIN teams.csv ON nba_players.team_id = teams.team_id ORDER BY team_name DESC;
+
+--INSERT functionality--
+INSERT INTO teams.csv (team_id, team_name) VALUES ("100", "Boston Celtics");
+
+--UPDATE functionality--
+UPDATE teams.csv SET team_name="Golden State Warriors" WHERE team_id="3";
+
+--DELETE functionality--
+my_sqlite> DELETE FROM teams.csv WHERE team_name="Los Angeles Lakers";
+
+
 ### The Core Team
 
 
