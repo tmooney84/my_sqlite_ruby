@@ -22,6 +22,8 @@ Ruby needs to be installed on your system in order to use this application. See 
 In order to start the program run:
 
 ```bash
+cd lib      # program code and demo csv files are housed in the "lib" directory
+
 ruby my_sqlite_cli.rb
 ```
 
