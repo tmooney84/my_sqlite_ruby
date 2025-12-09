@@ -117,7 +117,7 @@ class MySqliteRequest
   end
 
   def run
-    print
+    #print
     if(@type_of_request == :select)
       _run_select 
     elsif(@type_of_request == :insert)
